@@ -1,98 +1,6 @@
 const MeteorDb: any = {};
 
-type Vertex = {
-  _id: number;
-  _out: Array<Edge>;
-  _in: Array<Edge>;
-};
-
-type VertexId = Vertex["_id"];
-
-type Edge = {
-  _id: number;
-  _out: Vertex;
-  _in: Vertex;
-};
-
-type Graph = {
-  autoId: number;
-  vertices: Array<Vertex>;
-  edges: Array<Edge>;
-  vertexIndex: { [id: number]: Vertex };
-  addVertex: (vertex: Vertex) => number;
-  addEdge: (edge: Edge) => number;
-};
-
-MeteorDb.G = {}; // Prototype
-MeteorDb.Q = {};
 MeteorDb.Pipetypes = {};
-
-MeteorDb.G.addVertex = (vertex: Vertex) => {
-  if (!vertex._id) {
-    vertex._id = MeteorDb.G.autoId++;
-  } else if (this.findVertexById(vertex._id)) {
-    throw new Error("duplicate_vertex_id");
-  }
-
-  this.vertices.push(vertex);
-  this.vertexIndex[vertex._id] = vertex;
-  vertex._out = [];
-  vertex._in = [];
-
-  return vertex._id;
-};
-
-MeteorDb.G.addEdge = (edge: { _in: { _in: any[] }; _out: { _out: any[] } }) => {
-  edge._in = this.findVertexById(edge._in);
-  edge._out = this.findVertexById(edge._out);
-
-  if (!edge._in || !edge._out) {
-    throw new Error("invalid_edge");
-  }
-  edge._out._out.push(edge);
-  edge._in._in.push(edge);
-
-  this.edges.push(edge);
-};
-
-MeteorDb.G.v = (...args: any[]) => {
-  const query = MeteorDb.query(this);
-  1;
-  query.add("vertex", [].slice.call(args));
-  return query;
-};
-
-MeteorDb.Q.add = (pipetype: any, args: any) => {
-  const step = [pipetype, args];
-  this.program.push(step);
-  return this;
-};
-
-MeteorDb.query = (graph: any) => {
-  const query = Object.create(MeteorDb.Q);
-
-  query.graph = graph;
-  query.state = [];
-  query.program = [];
-  query.gremlins = [];
-
-  return query;
-};
-
-MeteorDb.graph = (v?: Array<Vertex>, e?: Array<Edge>) => {
-  const graph = Object.create(MeteorDb.G);
-
-  graph.edges = [];
-  graph.vertices = [];
-  graph.vertexIndex = [];
-
-  graph.autoId = 1;
-
-  if (v) graph.addVertices(v);
-  if (e) graph.addEdges(e);
-
-  return graph;
-};
 
 MeteorDb.addPipetype = (name: string, fun: any) => {
   MeteorDb.Pipetypes[name] = fun;
@@ -121,7 +29,7 @@ MeteorDb.addPipetype(
     graph: { findVertices: (arg0: any) => any },
     state: { vertices: any[] },
     args: any,
-    gremlin: { state: any }
+    gremlin: { state: any },
   ) => {
     if (!state.vertices) state.vertices = graph.findVertices(args);
 
@@ -129,7 +37,7 @@ MeteorDb.addPipetype(
 
     const vertex = state.vertices.pop(); // OPT: requires vertex cloning
     return MeteorDb.makeGremlin(vertex, gremlin.state); // gremlins from as/back queries
-  }
+  },
 );
 
 MeteorDb.addPipetype("out", MeteorDb.simpleTraversal("out"));
@@ -140,14 +48,14 @@ MeteorDb.addPipetype(
     _graph: any,
     _state: any,
     args: (string | number)[],
-    gremlin: { result: any; vertex: { [x: string]: any } }
+    gremlin: { result: any; vertex: { [x: string]: any } },
   ) => {
     if (!gremlin) return "pull";
 
     gremlin.result = gremlin.vertex[args[0]];
 
     return gremlin.result ? false : gremlin;
-  }
+  },
 );
 
 MeteorDb.addPipetype(
@@ -156,7 +64,7 @@ MeteorDb.addPipetype(
     graph: any,
     state: { [x: string]: boolean },
     args: any,
-    gremlin: { vertex: { _id: string | number } }
+    gremlin: { vertex: { _id: string | number } },
   ) => {
     if (!gremlin) return "pull";
 
@@ -165,7 +73,7 @@ MeteorDb.addPipetype(
     state[gremlin.vertex._id] = true;
 
     return gremlin;
-  }
+  },
 );
 
 MeteorDb.addPipetype(
@@ -174,7 +82,7 @@ MeteorDb.addPipetype(
     graph: any,
     state: any,
     args: ((arg0: any, arg1: any) => any)[],
-    gremlin: { vertex: any }
+    gremlin: { vertex: any },
   ) => {
     if (!gremlin) return "pull";
 
@@ -188,7 +96,7 @@ MeteorDb.addPipetype(
     if (!args[0](gremlin.vertex, gremlin)) return "pull";
 
     return gremlin;
-  }
+  },
 );
 
 MeteorDb.simpleTraversal = (direction: "out" | "in") => {
@@ -203,7 +111,7 @@ MeteorDb.simpleTraversal = (direction: "out" | "in") => {
     if (!state.edges || !state.edges.length) {
       state.gremlin = gremlin;
       state.edges = graph[findMethod](gremlin.vertex).filter(
-        MeteorDb.filterEdges(args[0])
+        MeteorDb.filterEdges(args[0]),
       );
     }
 
@@ -212,31 +120,6 @@ MeteorDb.simpleTraversal = (direction: "out" | "in") => {
     const vertex = state.edges.pop()[edgeList];
 
     return MeteorDb.goToVertex(vertex, state.gremlin);
-  };
-};
-
-MeteorDb.G.findVertices = (...args: string | any[]) => {
-  if (typeof args[0] === "object") return this.searchVertices(args[0]);
-  if (!args.length) return this.vertices.slice();
-
-  return this.findVerticesByIds(args);
-};
-
-MeteorDb.G.searchVertices = (filter: any) => {
-  return this.vertices.filter((vertex: any) =>
-    MeteorDb.objectFilter(vertex, filter)
-  );
-};
-
-MeteorDb.filterEdges = (filter: string | any[]) => {
-  return (edge: { _label: string }) => {
-    if (!filter) return true;
-
-    if (typeof filter === "string") return edge._label === filter;
-
-    if (Array.isArray(filter)) return filter.includes(edge._label);
-
-    return MeteorDb.objectFilter(edge, filter);
   };
 };
 
