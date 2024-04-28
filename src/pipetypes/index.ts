@@ -1,20 +1,21 @@
-import type { Graph } from "@meteordb/graph";
-import type { TaggedTemplateExpression } from "typescript";
+import type { Graph, MaybeGremlin } from "@meteordb/types";
 
-const pipetypes = {};
-
-type PipetypeArgs<TVertex extends object, TEdge extends object, TArgs> = {
-  graph: Graph<TVertex, TEdge>;
-  args: TArgs;
-  state: any;
-  gremlin: any;
-};
+const pipetypes: Record<string, Pipetype<any, any, any>> = {};
 
 export type Pipetype<TVertex extends object, TEdge extends object, TArgs> = (
-  args: PipetypeArgs<TVertex, TEdge, TArgs>,
-) => unknown;
+  graph: Graph<TVertex, TEdge>,
+  state: any,
+  gremlin: any,
+  ...args: TArgs[]
+) => MaybeGremlin<TVertex, TEdge>;
 
-type;
+const FAUX_PIPETYPE: Pipetype<object, object, []> = (
+  _graph,
+  _state,
+  maybeGremlin,
+) => {
+  return maybeGremlin ?? "pull";
+};
 
 const addPipetype = <TArgs, TVertex extends object, TEdge extends object>(
   name: string,
@@ -23,12 +24,16 @@ const addPipetype = <TArgs, TVertex extends object, TEdge extends object>(
   pipetypes[name] = fun;
 };
 
-const getPipetype = <TArgs, TVertex extends object, TEdge extends object>(
+export const getPipetype = <
+  TVertex extends object,
+  TEdge extends object,
+  TArgs,
+>(
   name: string,
 ): Pipetype<TVertex, TEdge, TArgs> => {
   const pipetype = pipetypes[name];
 
   if (!pipetype) throw new Error("unknown_pipetype");
 
-  return pipetype ?? MeteorDb.fauxPipetype;
+  return pipetype ?? FAUX_PIPETYPE;
 };

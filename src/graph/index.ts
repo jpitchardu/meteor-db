@@ -1,29 +1,6 @@
 import { add, createQuery } from "@meteordb/query";
+import type { Graph, Vertex, Edge, VertexId } from "@meteordb/types";
 import { objectFilter } from "@meteordb/utils/objectFilter";
-
-type Vertex<T extends object, TEdge extends object> = T & {
-  _id: number;
-  _out: Array<Edge<TEdge, T>>;
-  _in: Array<Edge<TEdge, T>>;
-};
-
-type Edge<T extends object, TVertex extends object> = T & {
-  _out: Vertex<TVertex, T>;
-  _in: Vertex<TVertex, T>;
-};
-
-export type Graph<TVertex extends object, TEdge extends object> = {
-  _autoId: number;
-  vertices: Array<Vertex<TVertex, TEdge>>;
-  edges: Array<Edge<TEdge, TVertex>>;
-  vertexIndex: { [id: number]: Vertex<TVertex, TEdge> };
-};
-
-type SearchObject = {
-  [key: string]: any;
-};
-
-type VertexId = number;
 
 const findVertexById = <TVertex extends object, TEdge extends object>(
   graph: Graph<TVertex, TEdge>,
@@ -41,7 +18,7 @@ const findVerticesByIds = <TVertex extends object, TEdge extends object>(
 
 const findVertices = <TVertex extends object, TEdge extends object>(
   graph: Graph<TVertex, TEdge>,
-  args: SearchObject | VertexId[],
+  args: Partial<TVertex> | VertexId[],
 ) => {
   if (!Array.isArray(args)) return searchVertices(graph, args);
 
@@ -52,7 +29,7 @@ const findVertices = <TVertex extends object, TEdge extends object>(
 
 const searchVertices = <TVertex extends object, TEdge extends object>(
   graph: Graph<TVertex, TEdge>,
-  filter: SearchObject,
+  filter: Partial<TVertex>,
 ) => graph.vertices.filter((vertex: any) => objectFilter(vertex, filter));
 
 const addVertex = <TVertex extends object, TEdge extends object>(

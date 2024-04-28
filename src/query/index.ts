@@ -1,11 +1,5 @@
-import type { Graph } from "@meteordb/graph";
-
-export type Query<TVertex extends object, TEdge extends object> = {
-  graph: Graph<TVertex, TEdge>;
-  state: any;
-  program: any;
-  gremlins: any;
-};
+import type { Graph, MaybeGremlin, Query } from "@meteordb/types";
+import { getPipetype } from "@meteordb/pipetypes";
 
 const run = <TVertex extends object, TEdge extends object>(
   query: Query<TVertex, TEdge>,
@@ -15,7 +9,7 @@ const run = <TVertex extends object, TEdge extends object>(
 
   let done = -1;
   let programCounter = max;
-  let maybeGremlin: boolean | string = false;
+  let maybeGremlin: MaybeGremlin<TVertex, TEdge> = false;
 
   let step;
   let state;
@@ -25,7 +19,7 @@ const run = <TVertex extends object, TEdge extends object>(
     const currentState = query.state;
     step = query.program[programCounter];
     state = currentState[programCounter] ?? {};
-    pipetype = MeteorDb.getPipetype(step[0]);
+    pipetype = getPipetype<TVertex, TEdge, unknown>(step[0]);
 
     maybeGremlin = pipetype(query.graph, step[1], step, maybeGremlin);
 
