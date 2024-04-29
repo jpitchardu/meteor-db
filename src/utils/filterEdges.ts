@@ -1,12 +1,11 @@
+import type { Edge } from "@meteordb/types";
 import { objectFilter } from "./objectFilter";
 
-export const filterEdges = (filter: string | any[]) => {
-  return (edge: { _label: string }) => {
+export const filterEdges = <TVertex extends object, TEdge extends object>(
+  filter: Partial<Edge<TVertex, TEdge>>,
+) => {
+  return (edge: Edge<TVertex, TEdge>) => {
     if (!filter) return true;
-
-    if (typeof filter === "string") return edge._label === filter;
-
-    if (Array.isArray(filter)) return filter.includes(edge._label);
 
     return objectFilter(edge, filter);
   };

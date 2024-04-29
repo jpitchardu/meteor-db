@@ -69,6 +69,20 @@ const addEdge = <TVertex extends object, TEdge extends object>(
   graph.edges.push(edge);
 };
 
+export const findInEdges = <TVertex extends object, TEdge extends object>(
+  graph: Graph<TVertex, TEdge>,
+  vertex: Vertex<TVertex, TEdge>,
+) => {
+  return graph.edges.filter((edge) => edge._in._id === vertex._id);
+};
+
+export const findOutEdges = <TVertex extends object, TEdge extends object>(
+  graph: Graph<TVertex, TEdge>,
+  vertex: Vertex<TVertex, TEdge>,
+) => {
+  return graph.edges.filter((edge) => edge._out._id === vertex._id);
+};
+
 const vertex = <TVertex extends object, TEdge extends object>(
   graph: Graph<TVertex, TEdge>,
   ...args: any[]
